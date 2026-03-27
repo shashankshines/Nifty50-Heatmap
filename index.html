@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nifty 50 Heatmap - Liquid Glass</title>
+    <!-- Google Fonts: Inter for a clean, modern aesthetic -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Animated background elements for the liquid glass effect -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="blob blob-4"></div>
+
+    <div class="container">
+        <header class="glass-header">
+            <div class="header-left">
+                <h1>NIFTY 50</h1>
+                <span class="subtitle">Index Tracker Heatmap</span>
+            </div>
+            <div class="header-right">
+                <div class="index-value">
+                    <span class="ltp" id="nifty-ltp">--</span>
+                    <span class="change positive" id="nifty-change">--</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="content-wrapper glass-panel">
+            <div class="heatmap-header">
+                <h2>Market Performance</h2>
+                <div class="legend">
+                    <span class="legend-item bg-gain-high">High Gains</span>
+                    <span class="legend-item bg-gain-mid">Mid Gains</span>
+                    <span class="legend-item bg-neutral">Neutral</span>
+                    <span class="legend-item bg-loss-mid">Mid Losses</span>
+                    <span class="legend-item bg-loss-high">High Losses</span>
+                </div>
+            </div>
+            
+            <div id="heatmap-grid" class="heatmap-grid">
+                <!-- Tiles will be dynamically injected here by script.js -->
+            </div>
+        </main>
+    </div>
+    <!-- Chart Modal Overlay -->
+    <div id="chart-modal" class="chart-modal-overlay">
+        <div class="chart-modal glass-panel">
+            <div class="chart-modal-header">
+                <div class="chart-modal-title">
+                    <span id="chart-symbol-name" class="chart-symbol">--</span>
+                    <span id="chart-stock-info" class="chart-info">--</span>
+                </div>
+                <button id="chart-close-btn" class="chart-close-btn">&times;</button>
+            </div>
+            <div id="chart-container" class="chart-container">
+                <!-- TradingView widget will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js?v=3"></script>
+</body>
+</html>
