@@ -855,11 +855,55 @@ body {
     to { width: 0; }
 }
 
+/* === Options Recommendation Styles === */
+
+/* Toast recommendation section */
+.toast-rec {
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.toast-rec-action {
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 0.35rem;
+    letter-spacing: 0.3px;
+}
+
+.toast-rec-detail {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.6;
+}
+
+.toast-rec-detail strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Level card recommendation */
+.level-rec {
+    margin-top: 0.3rem;
+}
+
+.level-rec-action {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+/* Wider toast for recommendations */
+.toast:has(.toast-rec) {
+    max-width: 480px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .alerts-panel { padding: 1.25rem; }
     .alerts-header { flex-direction: column; align-items: flex-start; }
     .levels-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
     .toast-container { top: 1rem; right: 1rem; left: 1rem; }
-    .toast { min-width: unset; }
+    .toast { min-width: unset; max-width: unset; }
 }

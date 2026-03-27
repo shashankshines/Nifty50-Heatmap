@@ -199,8 +199,72 @@ function playAlertBeep(type) {
     }
 }
 
+// ==============================
+// OPTIONS RECOMMENDATION ENGINE
+// ==============================
+
+function getNextWeeklyExpiry() {
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun, 4=Thu
+    let daysUntilThursday = (4 - day + 7) % 7;
+    if (daysUntilThursday === 0) {
+        // If today is Thursday, check if market is still open (before 3:30 PM)
+        const hours = now.getHours();
+        const mins = now.getMinutes();
+        if (hours > 15 || (hours === 15 && mins >= 30)) {
+            daysUntilThursday = 7; // Next week's expiry
+        }
+    }
+    const expiry = new Date(now);
+    expiry.setDate(now.getDate() + daysUntilThursday);
+    return expiry.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function getNiftyStrike(price, offset) {
+    // Nifty options trade in 50-point strike intervals
+    return Math.round(price / 50) * 50 + offset;
+}
+
+function getOptionsRecommendation(levelPrice, currentPrice, levelType) {
+    const expiry = getNextWeeklyExpiry();
+    const atmStrike = getNiftyStrike(currentPrice, 0);
+
+    if (levelType === 'resistance') {
+        // Resistance broken upward → Bullish → Buy CE
+        const otmStrike = atmStrike + 100;
+        return {
+            action: 'BUY CE',
+            strategy: 'Bullish Breakout',
+            primary: { strike: atmStrike, type: 'CE', label: 'ATM Call' },
+            secondary: { strike: otmStrike, type: 'CE', label: 'OTM Call (aggressive)' },
+            stopLoss: `SL below ${levelPrice}`,
+            target: `Target: ${atmStrike + 200} – ${atmStrike + 350}`,
+            expiry: expiry,
+            rationale: `Nifty broke above ${levelPrice} resistance. Bullish momentum expected.`,
+            risk: 'High risk if breakout fails. Use strict stop-loss.',
+        };
+    } else {
+        // Support broken downward → Bearish → Buy PE
+        const otmStrike = atmStrike - 100;
+        return {
+            action: 'BUY PE',
+            strategy: 'Bearish Breakdown',
+            primary: { strike: atmStrike, type: 'PE', label: 'ATM Put' },
+            secondary: { strike: otmStrike, type: 'PE', label: 'OTM Put (aggressive)' },
+            stopLoss: `SL above ${levelPrice}`,
+            target: `Target: ${atmStrike - 200} – ${atmStrike - 350}`,
+            expiry: expiry,
+            rationale: `Nifty broke below ${levelPrice} support. Bearish momentum expected.`,
+            risk: 'High risk if breakdown reverses. Use strict stop-loss.',
+        };
+    }
+}
+
+// Store last recommendations for display
+const levelRecommendations = {};
+
 // --- Toast Notification ---
-function showToast(title, message, type) {
+function showToast(title, message, type, recommendation) {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
@@ -208,11 +272,37 @@ function showToast(title, message, type) {
 
     const icon = type === 'resistance' ? '🔺' : '🔻';
 
+    let recHtml = '';
+    if (recommendation) {
+        const actionColor = type === 'resistance' ? '#6ee7b7' : '#fca5a5';
+        const actionEmoji = type === 'resistance' ? '📈' : '📉';
+        recHtml = `
+            <div class="toast-rec">
+                <div class="toast-rec-action" style="color:${actionColor}">
+                    ${actionEmoji} ${recommendation.action}  •  ${recommendation.strategy}
+                </div>
+                <div class="toast-rec-detail">
+                    ▸ ${recommendation.primary.label}: <strong>NIFTY ${recommendation.primary.strike} ${recommendation.primary.type}</strong>
+                </div>
+                <div class="toast-rec-detail">
+                    ▸ ${recommendation.secondary.label}: <strong>NIFTY ${recommendation.secondary.strike} ${recommendation.secondary.type}</strong>
+                </div>
+                <div class="toast-rec-detail">
+                    ▸ ${recommendation.stopLoss}  •  ${recommendation.target}
+                </div>
+                <div class="toast-rec-detail" style="opacity:0.5">
+                    Expiry: ${recommendation.expiry}  •  ⚠️ ${recommendation.risk}
+                </div>
+            </div>
+        `;
+    }
+
     toast.innerHTML = `
         <span class="toast-icon">${icon}</span>
         <div class="toast-body">
             <div class="toast-title">${title}</div>
             <div class="toast-message">${message}</div>
+            ${recHtml}
         </div>
         <button class="toast-close" onclick="this.parentElement.classList.add('removing'); setTimeout(() => this.parentElement.remove(), 350)">&times;</button>
         <div class="toast-progress"></div>
@@ -220,13 +310,14 @@ function showToast(title, message, type) {
 
     container.appendChild(toast);
 
-    // Auto-remove after 6 seconds
+    // Auto-remove after 10 seconds (longer for recommendation)
+    const timeout = recommendation ? 10000 : 6000;
     setTimeout(() => {
         if (toast.parentElement) {
             toast.classList.add('removing');
             setTimeout(() => toast.remove(), 350);
         }
-    }, 6000);
+    }, timeout);
 }
 
 // --- Browser Notification ---
@@ -281,12 +372,26 @@ function renderLevels() {
     grid.innerHTML = alertLevels.map(level => {
         const isCooling = levelCooldowns[level.price] && (Date.now() - levelCooldowns[level.price] < ALERT_COOLDOWN);
         const breachedClass = isCooling ? 'triggered' : '';
+        const rec = levelRecommendations[level.price];
+
+        let recHtml = '';
+        if (isCooling && rec) {
+            const color = level.type === 'resistance' ? '#6ee7b7' : '#fca5a5';
+            recHtml = `
+                <div class="level-rec">
+                    <span class="level-rec-action" style="color:${color}">
+                        ${rec.action}: NIFTY ${rec.primary.strike} ${rec.primary.type}
+                    </span>
+                </div>
+            `;
+        }
 
         return `
             <div class="level-card ${level.type} ${breachedClass}" data-price="${level.price}">
                 <div class="level-info">
                     <span class="level-price">₹${level.price.toLocaleString('en-IN')}</span>
                     <span class="level-label">${level.label}</span>
+                    ${recHtml}
                 </div>
                 <div class="level-status">
                     <span class="level-badge ${level.type} ${isCooling ? 'breached' : ''}">${isCooling ? '⚡ BREACHED' : level.type}</span>
@@ -332,12 +437,19 @@ function checkLevelBreaks(currentPrice) {
             const title = `⚡ NIFTY ${direction} ₹${level.price.toLocaleString('en-IN')}`;
             const message = `${level.label} • CMP: ₹${currentPrice.toLocaleString('en-IN', { maximumFractionDigits: 2 })} • ${new Date().toLocaleTimeString('en-IN')}`;
 
-            // Fire all alerts
-            showToast(title, message, level.type);
-            showBrowserNotification(title, message);
+            // Generate options recommendation
+            const rec = getOptionsRecommendation(level.price, currentPrice, level.type);
+            levelRecommendations[level.price] = rec;
+
+            // Fire all alerts with recommendation
+            showToast(title, message, level.type, rec);
+            showBrowserNotification(
+                title,
+                `${message}\n${rec.action}: NIFTY ${rec.primary.strike} ${rec.primary.type} | ${rec.stopLoss}`
+            );
             playAlertBeep(level.type);
 
-            // Re-render to show breached state
+            // Re-render to show breached state + recommendation
             renderLevels();
         }
     }
