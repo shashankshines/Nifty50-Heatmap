@@ -54,13 +54,6 @@ function openChart(symbol, ltp, pChange) {
     document.body.style.overflow = 'hidden';
 }
 
-function closeChart() {
-    chartModal.classList.remove('active');
-    document.body.style.overflow = '';
-    // Clear iframe after animation to stop loading
-    setTimeout(() => { chartContainer.innerHTML = ''; }, 350);
-}
-
 chartCloseBtn.addEventListener('click', closeChart);
 chartModal.addEventListener('click', (e) => {
     if (e.target === chartModal) closeChart();
@@ -68,6 +61,32 @@ chartModal.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeChart();
 });
+
+// --- Maximize Toggle ---
+const chartMaximizeBtn = document.getElementById('chart-maximize-btn');
+let isMaximized = false;
+
+function toggleMaximize() {
+    const modal = document.querySelector('.chart-modal');
+    isMaximized = !isMaximized;
+    modal.classList.toggle('maximized', isMaximized);
+    chartMaximizeBtn.textContent = isMaximized ? '⤡' : '⤢';
+    chartMaximizeBtn.title = isMaximized ? 'Restore' : 'Toggle Fullscreen';
+}
+
+function closeChart() {
+    chartModal.classList.remove('active');
+    document.body.style.overflow = '';
+    // Reset maximized state
+    if (isMaximized) {
+        isMaximized = false;
+        document.querySelector('.chart-modal').classList.remove('maximized');
+        chartMaximizeBtn.textContent = '⤢';
+    }
+    setTimeout(() => { chartContainer.innerHTML = ''; }, 350);
+}
+
+chartMaximizeBtn.addEventListener('click', toggleMaximize);
 
 // --- Data Fetching ---
 async function fetchLiveNiftyData() {
@@ -78,9 +97,65 @@ async function fetchLiveNiftyData() {
 
         if (json && json.data) {
             renderHeatmap(json.data);
+            
+            if (json.metadata && json.advance) {
+                renderMarketMetrics(json.metadata, json.advance);
+            }
         }
     } catch (error) {
         console.error("Failed to fetch live data:", error);
+    }
+}
+
+// --- Market Metrics Rendering ---
+function renderMarketMetrics(metadata, advance) {
+    const metricsPanel = document.getElementById('market-metrics');
+    metricsPanel.style.display = 'flex'; // Show it once data is loaded
+
+    // Top Row Metrics
+    document.getElementById('metric-prev-close').textContent = metadata.previousClose.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    document.getElementById('metric-open').textContent = metadata.open.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    
+    const volLakhs = metadata.totalTradedVolume / 100000;
+    document.getElementById('metric-volume').textContent = volLakhs.toLocaleString('en-IN', {maximumFractionDigits: 2});
+    
+    const valCrores = metadata.totalTradedValue / 10000000;
+    document.getElementById('metric-value').textContent = valCrores.toLocaleString('en-IN', {maximumFractionDigits: 2});
+    
+    const ffmCapLakhsCr = metadata.ffmc_sum / 10000000; // Assuming raw metadata is already large enough
+    document.getElementById('metric-ffm').textContent = ffmCapLakhsCr.toLocaleString('en-IN', {maximumFractionDigits: 2});
+
+    document.getElementById('metric-advance').textContent = advance.advances;
+    document.getElementById('metric-decline').textContent = advance.declines;
+
+    const currentPrice = metadata.last;
+
+    // 52 Week Slider
+    const w52High = metadata.yearHigh;
+    const w52Low = metadata.yearLow;
+    document.getElementById('slider-52w-high').textContent = w52High.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    document.getElementById('slider-52w-low').textContent = w52Low.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    
+    if (w52High > w52Low) {
+        let pct52 = ((currentPrice - w52Low) / (w52High - w52Low)) * 100;
+        pct52 = Math.max(0, Math.min(100, pct52)); // Clamp to 0-100
+        const tooltip52 = document.getElementById('slider-52w-tooltip');
+        tooltip52.style.left = `${pct52}%`;
+        document.getElementById('slider-52w-current').textContent = currentPrice.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    }
+
+    // Intraday Slider
+    const intraHigh = metadata.high;
+    const intraLow = metadata.low;
+    document.getElementById('slider-intra-high').textContent = intraHigh.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    document.getElementById('slider-intra-low').textContent = intraLow.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    
+    if (intraHigh > intraLow) {
+        let pctIntra = ((currentPrice - intraLow) / (intraHigh - intraLow)) * 100;
+        pctIntra = Math.max(0, Math.min(100, pctIntra));
+        const tooltipIntra = document.getElementById('slider-intra-tooltip');
+        tooltipIntra.style.left = `${pctIntra}%`;
+        document.getElementById('slider-intra-current').textContent = currentPrice.toLocaleString('en-IN', {minimumFractionDigits: 2});
     }
 }
 

@@ -64,6 +64,25 @@ const FALLBACK_DATA = [
   { symbol: "TRENT", lastPrice: 4120.3, pChange: 4.67 },
 ];
 
+const FALLBACK_METADATA = {
+  previousClose: 23306.45,
+  open: 23173.55,
+  totalTradedVolume: 297012015,
+  totalTradedValue: 220664200000.59,
+  ffmc_sum: 1048500000.07,
+  yearHigh: 26373.2,
+  yearLow: 21743.65,
+  last: 22961.65,
+  high: 23186.1,
+  low: 22905.6
+};
+
+const FALLBACK_ADVANCE = {
+  advances: "11",
+  declines: "39",
+  unchanged: "0"
+};
+
 async function fetchNSEData() {
   try {
     const response = await fetch(NSE_API, { headers: HEADERS });
@@ -76,7 +95,7 @@ async function fetchNSEData() {
     const data = await response.json();
 
     if (data && data.data) {
-      return data.data.map((item) => ({
+      const stocks = data.data.map((item) => ({
         symbol: item.symbol || "",
         lastPrice: item.lastPrice || 0,
         pChange: Math.round((item.pChange || 0) * 100) / 100,
@@ -87,6 +106,12 @@ async function fetchNSEData() {
         previousClose: item.previousClose || 0,
         totalTradedVolume: item.totalTradedVolume || 0,
       }));
+
+      return {
+        data: stocks,
+        metadata: data.metadata || null,
+        advance: data.advance || null
+      };
     }
 
     return null;
@@ -103,7 +128,11 @@ export default {
     // Handle the API endpoint
     if (url.pathname === "/api/nifty50") {
       const liveData = await fetchNSEData();
-      const responseData = { data: liveData || FALLBACK_DATA };
+      const responseData = liveData || { 
+        data: FALLBACK_DATA, 
+        metadata: FALLBACK_METADATA, 
+        advance: FALLBACK_ADVANCE 
+      };
 
       return new Response(JSON.stringify(responseData), {
         headers: {

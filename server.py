@@ -8,7 +8,12 @@ import sys
 import http.cookiejar
 
 # --- Live NSE Data Fetcher ---
-live_data_cache = {"data": [], "last_fetched": 0}
+live_data_cache = {
+    "data": [], 
+    "metadata": None, 
+    "advance": None, 
+    "last_fetched": 0
+}
 FETCH_INTERVAL = 5  # seconds between background fetches
 
 HEADERS = {
@@ -65,6 +70,8 @@ def fetch_nse_live_data():
                 )
 
             live_data_cache["data"] = stocks
+            live_data_cache["metadata"] = data.get("metadata", None)
+            live_data_cache["advance"] = data.get("advance", None)
             live_data_cache["last_fetched"] = time.time()
             nifty = next((s for s in stocks if s["symbol"] == "NIFTY 50"), None)
             if nifty:
@@ -144,27 +151,51 @@ fallback_data = [
     {"symbol": "TRENT", "lastPrice": 4120.30, "pChange": 4.67},
 ]
 
+fallback_metadata = {
+    "previousClose": 23306.45,
+    "open": 23173.55,
+    "totalTradedVolume": 297012015,
+    "totalTradedValue": 220664200000.59,
+    "ffmc_sum": 1048500000.07,
+    "yearHigh": 26373.2,
+    "yearLow": 21743.65,
+    "last": 22961.65,
+    "high": 23186.1,
+    "low": 22905.6
+}
+
+fallback_advance = {
+    "advances": "11",
+    "declines": "39",
+    "unchanged": "0"
+}
+
 
 class ProxyHTTPRequestHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
-        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
-        self.send_header("Pragma", "no-cache")
-        self.send_header("Expires", "0")
-        super().end_headers()
+        self.send_header('Access-Control-Allow-Origin', '*')
+        SimpleHTTPRequestHandler.end_headers(self)
 
     def do_GET(self):
-        if self.path == "/api/nifty50":
+        if self.path == '/api/nifty50':
             self.send_response(200)
-            self.send_header("Content-Type", "application/json")
+            self.send_header('Content-type', 'application/json')
             self.end_headers()
 
-            # Serve live data if available, otherwise fallback
             if live_data_cache["data"]:
-                response_data = {"data": live_data_cache["data"]}
+                response_data = {
+                    "data": live_data_cache["data"],
+                    "metadata": live_data_cache["metadata"],
+                    "advance": live_data_cache["advance"]
+                }
             else:
-                response_data = {"data": fallback_data}
-
-            self.wfile.write(json.dumps(response_data).encode("utf-8"))
+                response_data = {
+                    "data": fallback_data,
+                    "metadata": fallback_metadata,
+                    "advance": fallback_advance
+                }
+            
+            self.wfile.write(json.dumps(response_data).encode())
         else:
             super().do_GET()
 

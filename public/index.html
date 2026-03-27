@@ -15,19 +15,99 @@
     <div class="blob blob-3"></div>
     <div class="blob blob-4"></div>
 
-    <div class="container">
+    <div class="dashboard-container">
+        
+        <!-- Header -->
         <header class="glass-header">
             <div class="header-left">
                 <h1>NIFTY 50</h1>
-                <span class="subtitle">Index Tracker Heatmap</span>
+                <span class="subtitle">INDEX TRACKER HEATMAP</span>
             </div>
             <div class="header-right">
-                <div class="index-value">
-                    <span class="ltp" id="nifty-ltp">--</span>
-                    <span class="change positive" id="nifty-change">--</span>
+                <div class="index-value" style="display: flex; align-items: center; gap: 1rem; margin-right: 1.5rem;">
+                    <span class="ltp" id="nifty-ltp" style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">--</span>
+                    <span class="change" id="nifty-change" style="font-size: 1rem; font-weight: 600;">--</span>
+                </div>
+                <div>
+                    <div class="live-indicator">
+                        <span class="pulse"></span> LIVE
+                    </div>
+                    <div id="last-updated">Updating...</div>
                 </div>
             </div>
         </header>
+
+        <!-- Market Metrics Widget -->
+        <section class="market-metrics" id="market-metrics" style="display: none;">
+            <div class="metrics-top-row">
+                <div class="metric-item">
+                    <span class="metric-label">Prev. Close</span>
+                    <span class="metric-value" id="metric-prev-close">--</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Open</span>
+                    <span class="metric-value" id="metric-open">--</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Volume <small>(Lakhs)</small></span>
+                    <span class="metric-value" id="metric-volume">--</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Value <small>(Crores)</small></span>
+                    <span class="metric-value" id="metric-value">--</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">FFM. Cap <small>(Lakhs Crores)</small></span>
+                    <span class="metric-value" id="metric-ffm">--</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Advance</span>
+                    <span class="metric-value text-green" id="metric-advance">--</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Decline</span>
+                    <span class="metric-value text-red" id="metric-decline">--</span>
+                </div>
+            </div>
+            
+            <div class="metrics-bottom-row">
+                <!-- 52 Week Slider -->
+                <div class="metric-slider-box">
+                    <div class="slider-header">
+                        <span class="slider-title">52 Week</span>
+                    </div>
+                    <div class="slider-track-container">
+                        <div class="slider-tooltip" id="slider-52w-tooltip">
+                            <span id="slider-52w-current">--</span>
+                            <div class="slider-thumb"></div>
+                        </div>
+                        <div class="slider-track gradient-red-green"></div>
+                    </div>
+                    <div class="slider-labels">
+                        <div class="slider-label-left">Low<br><strong id="slider-52w-low">--</strong></div>
+                        <div class="slider-label-right">High<br><strong id="slider-52w-high">--</strong></div>
+                    </div>
+                </div>
+
+                <!-- Intraday Slider -->
+                <div class="metric-slider-box">
+                    <div class="slider-header">
+                        <span class="slider-title">Intraday</span>
+                    </div>
+                    <div class="slider-track-container">
+                        <div class="slider-tooltip" id="slider-intra-tooltip">
+                            <span id="slider-intra-current">--</span>
+                            <div class="slider-thumb"></div>
+                        </div>
+                        <div class="slider-track gradient-red-green"></div>
+                    </div>
+                    <div class="slider-labels">
+                        <div class="slider-label-left">Low<br><strong id="slider-intra-low">--</strong></div>
+                        <div class="slider-label-right">High<br><strong id="slider-intra-high">--</strong></div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <!-- Level Alerts Panel -->
         <section id="alerts-panel" class="alerts-panel glass-panel">
@@ -96,7 +176,10 @@
                     <span id="chart-symbol-name" class="chart-symbol">--</span>
                     <span id="chart-stock-info" class="chart-info">--</span>
                 </div>
-                <button id="chart-close-btn" class="chart-close-btn">&times;</button>
+                <div class="chart-modal-actions">
+                    <button id="chart-maximize-btn" class="chart-action-btn" title="Toggle Fullscreen">⤢</button>
+                    <button id="chart-close-btn" class="chart-close-btn">×</button>
+                </div>
             </div>
             <div id="chart-container" class="chart-container">
                 <!-- TradingView widget will be injected here -->
