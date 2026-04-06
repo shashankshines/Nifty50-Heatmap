@@ -1,0 +1,8 @@
+{
+  "appId": "com.niftyheatmap.app",
+  "appName": "Nifty Heatmap",
+  "webDir": "public",
+  "server": {
+    "androidScheme": "https"
+  }
+}
