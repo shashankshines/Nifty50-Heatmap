@@ -36,15 +36,19 @@ jobs:
       - name: Build Web Assets
         run: |
           mkdir -p public
-          cp index.html style.css script.js public/ || true
-          ls -la public/
+          cp index.html style.css script.js public/ || echo "Warning: Some files not found"
+          ls -R public/
+
+      - name: Accept Android SDK Licenses
+        run: yes | sdkmanager --licenses || true
 
       - name: Build Android Project with Capacitor
         run: |
           npx cap telemetry off
           npx cap add android || true
           npx cap sync android
-          cd android && ./gradlew assembleDebug
+          chmod +x android/gradlew
+          cd android && ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
