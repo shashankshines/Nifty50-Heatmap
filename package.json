@@ -1,7 +1,7 @@
 {
   "name": "nifty-heatmap",
   "version": "1.0.0",
-  "description": "A stunning, real-time **Nifty 50 Index Heatmap** with a premium **liquid glass (glassmorphism)** design. Fetches live market data directly from NSE India and renders an interactive, color-coded grid of all 50 constituent stocks.",
+  "description": "A stunning, real-time Nifty 50 Index Heatmap with a premium liquid glass design.",
   "main": "script.js",
   "scripts": {
     "build": "mkdir -p public && cp index.html style.css script.js public/",
@@ -10,6 +10,11 @@
     "android:build": "npm run build && npx cap add android && npx cap copy && npx cap sync",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/shashankshines/Nifty50-Heatmap.git"
@@ -17,7 +22,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/shashankshines/Nifty50-Heatmap/issues"
   },
